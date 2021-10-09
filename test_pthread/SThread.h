@@ -24,11 +24,7 @@ public:
 
 
     int StartTask();
-    int Kill();
-    void Join();
-    bool IsRunning();
-
-    static void Sleep(unsigned long millliseconds);
+    int StopTask();
 
 protected:
 	virtual void RunThread()
@@ -41,15 +37,15 @@ private:
 	CSThread(const CSThread &thr);
 	CSThread& operator = (const CSThread& thr);
 
-
+    //thread fun.
 	static void* ThreadFunction(void* pThr); 
 
 private:
-	ThreadHandle m_tObj;
-	bool m_bRunning;
+	ThreadHandle    m_tObj;
+	bool            m_bRunning;
 
-	UserFun m_UserFun;
-	void    *m_UserData;
+	UserFun         m_UserFun;
+	void            *m_UserData;
 };
 
 #endif

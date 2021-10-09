@@ -17,6 +17,7 @@ public:/*public fun*/
 	~UserData();
 
 	int startWork();
+	int stopwork();
 private:/*private fun*/
 	static void CreatTask(void *arg);
 	void pthread_fun();
@@ -40,8 +41,7 @@ UserData::~UserData()
 
 void UserData::pthread_fun()
 {
-	printf("m_work:%d, m_num:%d.\n", m_work, m_num);
-	while(m_num)
+	while(m_work)
 	{
 		printf("m_work:%d, m_num:%d.\n", m_work, m_num);
 		m_num --;
@@ -66,11 +66,15 @@ int UserData::startWork()
 	m_task = new CSThread(CreatTask, (void*)this);
 	int ret = m_task->StartTask();
 	printf("StartTask return:%d.\n", ret);
-
-	// printf("kill.\n");
-	// m_task->Join();
 }
 
+int UserData::stopwork()
+{
+	printf("stopwork.\n");
+	m_work = false;
+
+	m_task->StopTask();
+}
 
 
 int main()
@@ -80,7 +84,9 @@ int main()
     ud.startWork();
 
 
-    sleep(5);
+    sleep(1);
+
+    ud.stopwork();
 
 	return 0;
 }

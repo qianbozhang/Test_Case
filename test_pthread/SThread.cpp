@@ -2,12 +2,12 @@
 #include <unistd.h>
 #include <stdio.h>
 
-CSThread::CSThread(): m_bRunning(false), m_UserFun(NULL), m_UserData(NULL)
+CSThread::CSThread(): m_bRunning(false), m_UserFun(NULL), m_UserData(NULL), m_tObj(NULL)
 {
 
 }
 
-CSThread::CSThread(UserFun func, void* pUserData): m_bRunning(false), m_UserFun(func), m_UserData(pUserData)
+CSThread::CSThread(UserFun func, void* pUserData): m_bRunning(false), m_UserFun(func), m_UserData(pUserData), m_tObj(NULL)
 {
 	
 }
@@ -25,53 +25,34 @@ int CSThread::StartTask()
 		return ERR_ALREADYRUNNING;
 	}
 
-    //线程属性
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	//创建脱离线程
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	int ret = pthread_create(&m_tObj, &attr, ThreadFunction, this);
+	int ret = pthread_create(&m_tObj, NULL, ThreadFunction, this);
 	if(ret != 0)
 	{
 		return ERR_CANTSTARTTHREAD;
 	}
-	//线程创建好以后，释放线程属性
-   pthread_attr_destroy(&attr);
+	printf("threadId:%ld.\n", m_tObj);
+
 	return 0;
 }
 
-int CSThread::Kill()
+int CSThread::StopTask()
 {
-	if(!m_bRunning)
-	{
-		return ERR_NOTRUNNING;
-	}
-
-	m_bRunning = false;
-
-	int ret = pthread_join(m_tObj, NULL);
-	if(ret != 0)
-	{
-		return ERR_CANTKILLTHREAD;
-	}
+    if(m_tObj != (pthread_t)NULL)
+    {
+    	int ret = pthread_join(m_tObj, NULL);
+		if(ret != 0)
+		{
+			return ERR_CANTKILLTHREAD;
+		}
+    }
+	
 	return 0;
-}
-
-void CSThread::Join()
-{
-	pthread_join(m_tObj, NULL);
-}
-
-void CSThread::Sleep(unsigned long millliseconds)
-{
-	usleep(millliseconds * 1000);
 }
 
 
 void* CSThread::ThreadFunction(void *pThr)
 {
 	printf("ThreadFunction:called.\n");
-	int ret = 0;
 	CSThread *pThread = reinterpret_cast<CSThread*>(pThr);
 
 	pThread->m_bRunning = true;
@@ -87,10 +68,13 @@ void* CSThread::ThreadFunction(void *pThr)
 	}
 
 	pThread->m_bRunning = false;
-
-	pthread_detach(pThread->m_tObj);
-	pThread->m_tObj = (pthread_t)-1;
-
-	pthread_exit(&ret);
+    //当线程结束后回收资源
+    if( pThread->m_tObj != (pthread_t)NULL )
+    {
+    	printf("pthread_detach && pthread_exit\n");
+    	pthread_detach(pThread->m_tObj);
+		pThread->m_tObj = (pthread_t)-1;
+    }
+    pthread_exit(NULL);
 	return 0;
 }
